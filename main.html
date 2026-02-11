@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motorpool Parking Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071124;
+      --bg-soft: #0f1b32;
+      --card: #141f34;
+      --line: rgba(155, 173, 204, 0.2);
+      --text: #eef3ff;
+      --muted: #9daecc;
+      --accent: #3ea67a;
+      --chip: #223452;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top right, #132241, var(--bg));
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 1.25rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(15, 28, 50, 0.82);
+    }
+
+    .brand h1 { margin: 0; font-size: 1.5rem; }
+    .brand p { margin: 0.35rem 0 0; color: var(--muted); }
+
+    .top-actions { display: flex; align-items: center; gap: 1rem; }
+    .kpi { text-align: right; }
+    .kpi strong { font-size: 1.2rem; }
+    .kpi span { display: block; color: var(--muted); font-size: 0.9rem; }
+
+    button, select, input, textarea { font: inherit; }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-weight: 650;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+    }
+
+    .grid {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 1rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(15, 28, 50, 0.82);
+      padding: 1rem;
+    }
+
+    .panel h2, .panel h3 { margin: 0; }
+
+    .panel-title {
+      margin-bottom: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 0.7rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .filters input,
+    .filters select,
+    .register-form input,
+    .register-form select,
+    .register-form textarea {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+    }
+
+    .register-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+
+    .register-form .full { grid-column: 1 / -1; }
+
+    .helper {
+      color: var(--muted);
+      margin: 0.1rem 0 0.8rem;
+      font-size: 0.92rem;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .metric {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.65rem 0.75rem;
+    }
+
+    .metric .label { display: block; color: var(--muted); font-size: 0.82rem; }
+    .metric .value { display: block; margin-top: 0.2rem; font-size: 1.15rem; font-weight: 700; }
+
+    .zone-list { margin-top: 1rem; display: grid; gap: 0.55rem; }
+
+    .zone-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+      background: var(--card);
+    }
+
+    .zone-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+      background: var(--chip);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .badge.full { background: rgba(217, 78, 99, 0.22); color: #ffc7d1; }
+    .badge.risk { background: rgba(216, 158, 54, 0.22); color: #ffdca8; }
+    .badge.ok { background: rgba(62, 166, 122, 0.22); color: #bbf6dc; }
+
+    .slots {
+      margin-top: 0.55rem;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 0.35rem;
+    }
+
+    .slot { height: 15px; border-radius: 5px; background: #2c3e61; }
+    .slot.occupied { background: linear-gradient(90deg, #4fb88a, #32946c); }
+    .slot.highlight { outline: 2px solid #f0bc4f; outline-offset: 1px; }
+
+    .vehicle-table { margin-top: 0.8rem; width: 100%; border-collapse: collapse; }
+
+    .vehicle-table th,
+    .vehicle-table td {
+      text-align: left;
+      padding: 0.55rem 0.35rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+
+    .vehicle-table th { color: var(--muted); font-weight: 600; }
+    .empty { text-align: center; padding: 1rem; color: var(--muted); }
+
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .slots { grid-template-columns: repeat(6, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .filters,
+      .register-form { grid-template-columns: 1fr; }
+      .kpi { display: none; }
+      .slots { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main id="main-content"></main>
+
+  <script>
+    const state = {
+      vehicles: [
+        { brand: "Land Rover", model: "Defender", plate: "LR-DEF-01", color: "White", year: 2024, zone: "Zone A — Front", note: "Customer drop-off" },
+        { brand: "Land Rover", model: "Range Rover Sport", plate: "LR-RRS-02", color: "Black", year: 2024, zone: "Zone A — Front", note: "Ready for wash" },
+        { brand: "Jaguar", model: "F-PACE", plate: "JG-FPC-01", color: "Grey", year: 2023, zone: "Zone A — Front", note: "Awaiting pickup" },
+        { brand: "Land Rover", model: "Range Rover Velar", plate: "LR-VLR-05", color: "Bronze", year: 2024, zone: "Zone A — Front", note: "Needs charging" },
+        { brand: "Tesla", model: "Model Y", plate: "TS-MY-01", color: "Blue", year: 2025, zone: "Zone B — Graveyard", note: "Long-stay" },
+        { brand: "Volvo", model: "XC90", plate: "VO-XC9-12", color: "Silver", year: 2022, zone: "Zone B — Graveyard", note: "Customer contact pending" },
+        { brand: "BMW", model: "iX", plate: "BM-IX-22", color: "Green", year: 2025, zone: "Zone C — Haugen", note: "Inspection due" },
+        { brand: "Audi", model: "Q7", plate: "AU-Q7-87", color: "Red", year: 2021, zone: "Zone C — Haugen", note: "Urgent pickup" }
+      ],
+      zones: [
+        { name: "Zone A — Front", slots: 8 },
+        { name: "Zone B — Graveyard", slots: 6 },
+        { name: "Zone C — Haugen", slots: 5 },
+        { name: "Zone D — Holmen", slots: 7 }
+      ],
+      filters: {
+        query: "",
+        brand: "All brands",
+        color: "All colors"
+      }
+    };
+
+    const brands = ["Land Rover", "Jaguar", "Tesla", "Volvo", "BMW", "Audi"];
+    const modelsByBrand = {
+      "Land Rover": ["Defender", "Discovery", "Discovery Sport", "Range Rover", "Range Rover Sport", "Range Rover Velar", "Range Rover Evoque"],
+      Jaguar: ["F-PACE", "E-PACE", "I-PACE", "XF", "XE"],
+      Tesla: ["Model 3", "Model Y", "Model S", "Model X", "Cybertruck"],
+      Volvo: ["XC40", "XC60", "XC90", "EX30", "V90"],
+      BMW: ["i4", "iX", "X5", "X7", "320e"],
+      Audi: ["Q4 e-tron", "Q5", "Q7", "A6", "e-tron GT"]
+    };
+    const colors = ["White", "Black", "Silver", "Grey", "Blue", "Red", "Green", "Bronze", "Gold", "Brown", "Orange"];
+
+    function buildLayout() {
+      const root = document.getElementById("main-content");
+      root.className = "app";
+      root.innerHTML = `
+        <header class="header">
+          <div class="brand">
+            <h1>Motorpool Parking</h1>
+            <p>Fast intake + live slot overview for high-volume arrivals</p>
+          </div>
+          <div class="top-actions">
+            <div class="kpi" id="top-kpi"></div>
+            <button class="btn" id="focus-register">+ Register Vehicle</button>
+          </div>
+        </header>
+
+        <section class="grid">
+          <div class="panel">
+            <div class="panel-title">
+              <h2>Live Parking Map</h2>
+              <span class="badge" id="busy-zones"></span>
+            </div>
+            <p class="helper">Each bar is one slot. Gold outline means a plate matching your search.</p>
+
+            <div class="filters">
+              <input id="query" placeholder="Search by plate, model or note" />
+              <select id="brand-filter"><option>All brands</option></select>
+              <select id="color-filter"><option>All colors</option></select>
+            </div>
+
+            <div class="metrics" id="metrics"></div>
+            <div class="zone-list" id="zone-list"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              <h3>Quick Vehicle Intake</h3>
+              <span class="badge">~ 30 sec per car</span>
+            </div>
+            <p class="helper">Staff can register a parked car right away and keep slot usage updated.</p>
+            <form class="register-form" id="vehicle-form">
+              <select id="brand" required></select>
+              <select id="model" required></select>
+              <input id="plate" maxlength="15" placeholder="License plate" required />
+              <select id="color" required></select>
+              <input id="year" type="number" min="1990" max="2035" value="2026" required />
+              <select id="zone" required></select>
+              <textarea class="full" id="note" rows="3" placeholder="Notes: key handover, wash, pickup time"></textarea>
+              <button class="btn full" type="submit">Add Vehicle</button>
+            </form>
+
+            <table class="vehicle-table">
+              <thead>
+                <tr>
+                  <th>Plate</th><th>Vehicle</th><th>Zone</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-table"></tbody>
+            </table>
+          </div>
+        </section>
+      `;
+
+      hydrateInputs();
+      bindEvents();
+      render();
+    }
+
+    function hydrateInputs() {
+      const brandFilter = document.getElementById("brand-filter");
+      const colorFilter = document.getElementById("color-filter");
+      const brand = document.getElementById("brand");
+      const color = document.getElementById("color");
+      const zone = document.getElementById("zone");
+
+      brands.forEach((item) => {
+        brandFilter.append(new Option(item, item));
+        brand.append(new Option(item, item));
+      });
+
+      colors.forEach((item) => {
+        colorFilter.append(new Option(item, item));
+        color.append(new Option(item, item));
+      });
+
+      state.zones.forEach((item) => zone.append(new Option(item.name, item.name)));
+
+      brand.value = brands[0];
+      syncModels();
+    }
+
+    function syncModels() {
+      const model = document.getElementById("model");
+      const selectedBrand = document.getElementById("brand").value;
+      model.innerHTML = "";
+      (modelsByBrand[selectedBrand] || []).forEach((item) => model.append(new Option(item, item)));
+    }
+
+    function bindEvents() {
+      document.getElementById("focus-register").addEventListener("click", () => {
+        document.getElementById("plate").focus();
+      });
+
+      document.getElementById("query").addEventListener("input", (event) => {
+        state.filters.query = event.target.value.trim().toLowerCase();
+        render();
+      });
+
+      document.getElementById("brand-filter").addEventListener("change", (event) => {
+        state.filters.brand = event.target.value;
+        render();
+      });
+
+      document.getElementById("color-filter").addEventListener("change", (event) => {
+        state.filters.color = event.target.value;
+        render();
+      });
+
+      document.getElementById("brand").addEventListener("change", syncModels);
+
+      document.getElementById("vehicle-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const entry = {
+          brand: document.getElementById("brand").value,
+          model: document.getElementById("model").value,
+          plate: document.getElementById("plate").value.trim().toUpperCase(),
+          color: document.getElementById("color").value,
+          year: Number(document.getElementById("year").value),
+          zone: document.getElementById("zone").value,
+          note: document.getElementById("note").value.trim()
+        };
+
+        if (!entry.plate) return;
+
+        state.vehicles.unshift(entry);
+        event.target.reset();
+        document.getElementById("brand").value = brands[0];
+        syncModels();
+        document.getElementById("year").value = "2026";
+        render();
+      });
+    }
+
+    function filteredVehicles() {
+      return state.vehicles.filter((vehicle) => {
+        const source = `${vehicle.plate} ${vehicle.model} ${vehicle.brand} ${vehicle.note}`.toLowerCase();
+        const matchesQuery = !state.filters.query || source.includes(state.filters.query);
+        const matchesBrand = state.filters.brand === "All brands" || vehicle.brand === state.filters.brand;
+        const matchesColor = state.filters.color === "All colors" || vehicle.color === state.filters.color;
+        return matchesQuery && matchesBrand && matchesColor;
+      });
+    }
+
+    function statusBadge(occupied, slots) {
+      const ratio = occupied / slots;
+      if (ratio >= 1) return '<span class="badge full">Full</span>';
+      if (ratio >= 0.75) return '<span class="badge risk">Near full</span>';
+      return '<span class="badge ok">Open</span>';
+    }
+
+    function render() {
+      const visible = filteredVehicles();
+
+      const topKpi = document.getElementById("top-kpi");
+      topKpi.innerHTML = `<strong>${state.vehicles.length}</strong><span>vehicles total</span>`;
+
+      const busyZones = state.zones.filter((zone) => {
+        const count = state.vehicles.filter((vehicle) => vehicle.zone === zone.name).length;
+        return count / zone.slots >= 0.75;
+      }).length;
+      document.getElementById("busy-zones").textContent = `${busyZones} zones under pressure`;
+
+      const metrics = document.getElementById("metrics");
+      const freeSlots = state.zones.reduce((acc, zone) => {
+        const count = state.vehicles.filter((vehicle) => vehicle.zone === zone.name).length;
+        return acc + Math.max(zone.slots - count, 0);
+      }, 0);
+      const recentlyAdded = state.vehicles.slice(0, 3).map((item) => item.plate).join(" · ");
+      metrics.innerHTML = `
+        <article class="metric"><span class="label">Visible vehicles</span><span class="value">${visible.length}</span></article>
+        <article class="metric"><span class="label">Total free slots</span><span class="value">${freeSlots}</span></article>
+        <article class="metric"><span class="label">Near capacity zones</span><span class="value">${busyZones}</span></article>
+        <article class="metric"><span class="label">Recent plates</span><span class="value" style="font-size:.92rem">${recentlyAdded || "—"}</span></article>
+      `;
+
+      const zoneList = document.getElementById("zone-list");
+      zoneList.innerHTML = "";
+
+      state.zones.forEach((zone) => {
+        const vehiclesInZone = state.vehicles.filter((vehicle) => vehicle.zone === zone.name);
+        const highlighted = visible
+          .filter((vehicle) => vehicle.zone === zone.name)
+          .map((vehicle) => vehicle.plate);
+
+        const slots = Array.from({ length: zone.slots }).map((_, index) => {
+          const occupied = index < vehiclesInZone.length;
+          const plate = vehiclesInZone[index]?.plate;
+          const highlight = plate && highlighted.includes(plate);
+          return `<span class="slot ${occupied ? "occupied" : ""} ${highlight ? "highlight" : ""}" title="${plate || "Empty"}"></span>`;
+        }).join("");
+
+        const item = document.createElement("article");
+        item.className = "zone-item";
+        item.innerHTML = `
+          <div class="zone-top">
+            <strong>${zone.name}</strong>
+            ${statusBadge(vehiclesInZone.length, zone.slots)}
+          </div>
+          <small class="helper">${vehiclesInZone.length} / ${zone.slots} slots occupied</small>
+          <div class="slots">${slots}</div>
+        `;
+        zoneList.append(item);
+      });
+
+      const recent = document.getElementById("recent-table");
+      recent.innerHTML = "";
+      const rows = visible.slice(0, 7);
+
+      if (!rows.length) {
+        recent.innerHTML = '<tr><td class="empty" colspan="4">No vehicles match these filters.</td></tr>';
+        return;
+      }
+
+      rows.forEach((vehicle) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${vehicle.plate}</td>
+          <td>${vehicle.brand} ${vehicle.model}</td>
+          <td>${vehicle.zone}</td>
+          <td>${vehicle.note || "Parked"}</td>
+        `;
+        recent.append(row);
+      });
+    }
+
+    buildLayout();
+  </script>
+</body>
+</html>
